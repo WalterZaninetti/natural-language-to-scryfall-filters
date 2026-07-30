@@ -1,0 +1,75 @@
+{"lang":"en","nl":"cheap red creatures with haste","expectedQuery":"c:r t:creature kw:haste mv<=3"}
+{"lang":"en","nl":"legendary green creatures with power 5 or greater","expectedQuery":"t:legendary t:creature c:g pow>=5"}
+{"lang":"en","nl":"blue instants that counter a spell","expectedQuery":"c:u t:instant o:\"counter target\""}
+{"lang":"en","nl":"cards that draw two cards","expectedQuery":"o:\"draw two cards\""}
+{"lang":"en","nl":"what can I run in an azorius commander deck","expectedQuery":"f:commander id<=azorius"}
+{"lang":"en","nl":"instants or sorceries that cost two or less","expectedQuery":"(t:instant or t:sorcery) mv<=2"}
+{"lang":"en","nl":"creatures with flying that are not blue","expectedQuery":"t:creature kw:flying -c:u"}
+{"lang":"en","nl":"mythic rares from Zendikar Rising","expectedQuery":"r:mythic set:znr"}
+{"lang":"en","nl":"rare or better modern legal cards under five dollars","expectedQuery":"r>=rare f:modern usd<5"}
+{"lang":"en","nl":"artifacts with mana value zero","expectedQuery":"t:artifact mv=0"}
+{"lang":"en","nl":"cards illustrated by Rebecca Guay","expectedQuery":"a:\"rebecca guay\""}
+{"lang":"en","nl":"double faced werewolf cards","expectedQuery":"is:dfc t:werewolf"}
+{"lang":"en","nl":"fetch lands","expectedQuery":"is:fetchland"}
+{"lang":"en","nl":"planeswalkers with three starting loyalty","expectedQuery":"t:planeswalker loy=3"}
+{"lang":"en","nl":"cards banned in legacy","expectedQuery":"banned:legacy"}
+{"lang":"en","nl":"colorless creatures with mana value six or more","expectedQuery":"c:c t:creature mv>=6"}
+{"lang":"en","nl":"vanilla creatures","expectedQuery":"is:vanilla t:creature"}
+{"lang":"en","nl":"cards with an izzet watermark","expectedQuery":"wm:izzet"}
+{"lang":"en","nl":"creatures from the original Kamigawa block","expectedQuery":"t:creature block:chk"}
+{"lang":"en","nl":"cards whose name begins with Lightning","expectedQuery":"name:/^Lightning/"}
+{"lang":"en","nl":"green cards with an even mana value","expectedQuery":"c:g mv:even"}
+{"lang":"en","nl":"creatures whose power exceeds their toughness","expectedQuery":"t:creature pow>tou"}
+{"lang":"en","nl":"commons printed in 2023 or later","expectedQuery":"r:common year>=2023"}
+{"lang":"en","nl":"equipment that costs one mana","expectedQuery":"t:equipment mv=1"}
+{"lang":"en","nl":"black removal spells that destroy a creature","expectedQuery":"c:b o:\"destroy target creature\""}
+{"lang":"en","nl":"dual lands that enter untapped","expectedQuery":"is:dual"}
+{"lang":"en","nl":"cards restricted in vintage","expectedQuery":"restricted:vintage"}
+{"lang":"en","nl":"pauper legal blue cantrips","expectedQuery":"f:pauper c:u o:\"draw a card\""}
+{"lang":"en","nl":"tokens that are not creatures","expectedQuery":"t:token -t:creature"}
+{"lang":"en","nl":"cards over twenty euro","expectedQuery":"eur>20"}
+{"lang":"en","nl":"cards printed in Japanese","expectedQuery":"lang:ja","expectLangFilter":true}
+{"lang":"en","nl":"sort red removal by price, cheapest first","expectedQuery":"c:r o:destroy order:usd direction:asc"}
+{"lang":"it","nl":"creature rosse economiche con rapidità","expectedQuery":"c:r t:creature kw:haste mv<=3"}
+{"lang":"it","nl":"carte che pescano due carte","expectedQuery":"o:\"draw two cards\""}
+{"lang":"it","nl":"creature leggendarie verdi con forza almeno 5","expectedQuery":"t:legendary t:creature c:g pow>=5"}
+{"lang":"it","nl":"istantanei blu sotto i cinque euro","expectedQuery":"c:u t:instant eur<5"}
+{"lang":"it","nl":"cosa posso giocare nel mio mazzo commander golgari","expectedQuery":"f:commander id<=golgari"}
+{"lang":"it","nl":"creature con volare che non sono blu","expectedQuery":"t:creature kw:flying -c:u"}
+{"lang":"it","nl":"planeswalker legali in modern","expectedQuery":"t:planeswalker f:modern"}
+{"lang":"it","nl":"carte stampate in italiano","expectedQuery":"lang:it","expectLangFilter":true}
+{"lang":"de","nl":"billige rote Kreaturen mit Eile","expectedQuery":"c:r t:creature kw:haste mv<=3"}
+{"lang":"de","nl":"Karten die zwei Karten ziehen","expectedQuery":"o:\"draw two cards\""}
+{"lang":"de","nl":"legendäre Kreaturen mit Flugfähigkeit","expectedQuery":"t:legendary t:creature kw:flying"}
+{"lang":"de","nl":"Zaubersprüche mit Manabetrag eins","expectedQuery":"(t:instant or t:sorcery) mv=1"}
+{"lang":"de","nl":"Kreaturen aus Kamigawa: Neon Dynasty","expectedQuery":"t:creature set:neo"}
+{"lang":"de","nl":"seltene Karten unter fünf Dollar","expectedQuery":"r:rare usd<5"}
+{"lang":"de","nl":"auf Deutsch gedruckte Karten","expectedQuery":"lang:de","expectLangFilter":true}
+{"lang":"fr","nl":"créatures rouges pas chères avec célérité","expectedQuery":"c:r t:creature kw:haste mv<=3"}
+{"lang":"fr","nl":"cartes qui piochent deux cartes","expectedQuery":"o:\"draw two cards\""}
+{"lang":"fr","nl":"créatures légendaires vertes avec force 5 ou plus","expectedQuery":"t:legendary t:creature c:g pow>=5"}
+{"lang":"fr","nl":"éphémères bleus à moins de cinq euros","expectedQuery":"c:u t:instant eur<5"}
+{"lang":"fr","nl":"terres qui vont chercher une autre terre","expectedQuery":"is:fetchland"}
+{"lang":"fr","nl":"artefacts légendaires","expectedQuery":"t:legendary t:artifact"}
+{"lang":"fr","nl":"cartes imprimées en français","expectedQuery":"lang:fr","expectLangFilter":true}
+{"lang":"es","nl":"criaturas rojas baratas con prisa","expectedQuery":"c:r t:creature kw:haste mv<=3"}
+{"lang":"es","nl":"cartas que roban dos cartas","expectedQuery":"o:\"draw two cards\""}
+{"lang":"es","nl":"criaturas legendarias verdes con fuerza 5 o más","expectedQuery":"t:legendary t:creature c:g pow>=5"}
+{"lang":"es","nl":"instantáneos azules por menos de cinco euros","expectedQuery":"c:u t:instant eur<5"}
+{"lang":"es","nl":"planeswalkers legales en pioneer","expectedQuery":"t:planeswalker f:pioneer"}
+{"lang":"es","nl":"criaturas incoloras con coste seis o más","expectedQuery":"c:c t:creature mv>=6"}
+{"lang":"es","nl":"cartas impresas en español","expectedQuery":"lang:es","expectLangFilter":true}
+{"lang":"it","nl":"Fulmine","expectQueryContains":"Lightning Bolt","note":"localized card name must canonicalize to English"}
+{"lang":"de","nl":"Blitzschlag","expectQueryContains":"Lightning Bolt","note":"localized card name must canonicalize to English"}
+{"lang":"fr","nl":"cartes qui s'appellent Foudre","expectQueryContains":"Lightning Bolt","note":"localized card name must canonicalize to English"}
+{"lang":"it","nl":"creature rosse","expectNoLangFilter":true,"note":"asking in Italian must not add lang:it"}
+{"lang":"de","nl":"blaue Kreaturen mit Flugfähigkeit","expectNoLangFilter":true,"note":"asking in German must not add lang:de"}
+{"lang":"fr","nl":"créatures vertes","expectNoLangFilter":true,"note":"asking in French must not add lang:fr"}
+{"lang":"es","nl":"criaturas blancas","expectNoLangFilter":true,"note":"asking in Spanish must not add lang:es"}
+{"lang":"it","nl":"carte con il bordo dorato","expectUnsupported":true,"note":"border is outside the whitelist"}
+{"lang":"en","nl":"cards in my cube","expectUnsupported":true,"note":"cube is outside the whitelist"}
+{"lang":"en","nl":"cards ranked in the top 100 on EDHREC","expectUnsupported":true,"note":"edhrecrank is outside the whitelist"}
+{"lang":"en","nl":"cards with the 1997 card frame","expectUnsupported":true,"note":"frame is outside the whitelist"}
+{"lang":"en","nl":"only the ones under five dollars","previous":{"text":"creature rosse economiche con rapidità","query":"c:r t:creature kw:haste mv<=3"},"expectedQuery":"c:r t:creature kw:haste mv<=3 usd<5","note":"cross-language refinement: Italian first turn, English follow-up"}
+{"lang":"it","nl":"solo quelle leggendarie","previous":{"text":"cheap red creatures with haste","query":"c:r t:creature kw:haste mv<=3"},"expectedQuery":"c:r t:creature kw:haste mv<=3 t:legendary","note":"cross-language refinement: English first turn, Italian follow-up"}
+{"lang":"en","nl":"drop the mana value limit","previous":{"text":"cheap red creatures with haste","query":"c:r t:creature kw:haste mv<=3"},"expectedQuery":"c:r t:creature kw:haste","note":"refinement must remove a constraint"}
