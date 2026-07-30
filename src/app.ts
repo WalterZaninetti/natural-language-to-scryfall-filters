@@ -33,8 +33,28 @@ function isAuthorized(supplied: string | undefined): boolean {
   );
 }
 
-function requireApiKey(req: Request, res: Response, next: NextFunction): void {
-  if (!isAuthorized(req.header('x-api-key'))) {
+/**
+ * Browser clients cannot hold a shared secret: anything a public web app sends is readable in
+ * its own bundle, so shipping the key there would publish it — and worse, publish a credential
+ * that also authorises non-browser callers until it is rotated.
+ *
+ * So a request is authorised by *either* the key or an allowed Origin. Server-to-server callers
+ * still need the key and gain nothing from the Origin path (curl sends no Origin by default).
+ * A browser on an allowed origin needs no credential at all, so none ships.
+ *
+ * Be clear about what this is: an attacker who forges an Origin header gets through. It is a gate
+ * against casual misuse, not an authentication boundary. What actually protects the Anthropic
+ * spend is the per-IP hourly rate limit below. Upgrading to real attestation means Firebase App
+ * Check or Turnstile, which load third-party script into the page — a trade the calling site
+ * currently refuses on privacy grounds, and a decision to make deliberately rather than by drift.
+ */
+function isAllowedOrigin(req: Request): boolean {
+  const origin = req.headers.origin;
+  return typeof origin === 'string' && config.allowedOrigins.includes(origin);
+}
+
+function requireAuthorized(req: Request, res: Response, next: NextFunction): void {
+  if (!isAuthorized(req.header('x-api-key')) && !isAllowedOrigin(req)) {
     res.status(401).json({ error: 'unauthorized' });
     return;
   }
@@ -73,7 +93,7 @@ export function createApp() {
     });
   });
 
-  app.post('/translate', requireApiKey, async (req: Request, res: Response) => {
+  app.post('/translate', requireAuthorized, async (req: Request, res: Response) => {
     const parsed = RequestSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid_request', details: z.treeifyError(parsed.error) });
