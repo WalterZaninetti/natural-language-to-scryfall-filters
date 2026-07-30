@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import * as z from 'zod';
 import { PROMPT_VERSION } from './claude.ts';
@@ -20,9 +21,30 @@ const RequestSchema = z.object({
     .optional(),
 });
 
+/**
+ * Both sides are hashed before comparison: timingSafeEqual throws on length mismatch, and
+ * branching on length first would leak the key's size through timing.
+ */
+function isAuthorized(supplied: string | undefined): boolean {
+  if (!supplied) return false;
+  return timingSafeEqual(
+    createHash('sha256').update(supplied).digest(),
+    createHash('sha256').update(config.clientApiKey).digest(),
+  );
+}
+
+function requireApiKey(req: Request, res: Response, next: NextFunction): void {
+  if (!isAuthorized(req.header('x-api-key'))) {
+    res.status(401).json({ error: 'unauthorized' });
+    return;
+  }
+  next();
+}
+
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  if (config.trustProxy !== undefined) app.set('trust proxy', config.trustProxy);
   app.use(express.json({ limit: '32kb' }));
 
   app.use((req, res, next) => {
@@ -30,7 +52,7 @@ export function createApp() {
     if (origin && config.allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
-      res.setHeader('Access-Control-Allow-Headers', 'content-type');
+      res.setHeader('Access-Control-Allow-Headers', 'content-type, x-api-key');
       res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     }
     if (req.method === 'OPTIONS') {
@@ -51,7 +73,7 @@ export function createApp() {
     });
   });
 
-  app.post('/translate', async (req: Request, res: Response) => {
+  app.post('/translate', requireApiKey, async (req: Request, res: Response) => {
     const parsed = RequestSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid_request', details: z.treeifyError(parsed.error) });
