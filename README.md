@@ -58,7 +58,33 @@ A refinement may arrive in a different language than the original turn.
 
 ### `GET /health`
 
-Grounding-index age, registry version, and store reachability.
+Grounding-index age, registry version, store reachability, and daily-budget usage.
+
+### Access and limits
+
+`POST /translate` is **public**. The calling site reaches it same-origin — Firebase Hosting rewrites
+`walterzaninetti.com/api/**` here and the Vite dev server proxies the same path — so the browser
+sends no credential and none ships in its bundle. A public web app cannot hold a secret, so the
+service does not pretend it can: an earlier `Origin` allowlist only looked like a gate, because
+`Origin` is set by the caller and forged in one curl flag.
+
+Hosting passes the matched path through unchanged, so requests arrive as `/api/translate`; a
+middleware strips the prefix, letting one set of routes serve the rewrite, the dev proxy, and the
+direct Cloud Run URL without per-environment configuration.
+
+Two limits bound abuse:
+
+| Limit | Default | Env |
+|---|---|---|
+| Per-IP, hourly | 15 | `RATE_LIMIT_PER_HOUR` |
+| Model calls, daily | 500 | `DAILY_MODEL_CALL_LIMIT` |
+
+The daily ceiling is the one that caps the Anthropic bill — rotating IPs is cheap, so the per-IP
+limit only shapes ordinary traffic. Both return `429`, distinguished by the `error` field
+(`rate_limited` vs `daily_limit`).
+
+A valid `x-api-key` marks a server-to-server caller (the eval suite, scripts) and skips the per-IP
+limit only. It is a convenience tier, not an access control: the daily ceiling still applies.
 
 ## Running locally
 

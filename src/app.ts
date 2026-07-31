@@ -6,6 +6,7 @@ import { config } from './config.ts';
 import { getGroundingIndex, groundingStatus } from './grounding/index.ts';
 import { LANGUAGES } from './prompt/examples/index.ts';
 import { REGISTRY_VERSION } from './registry/operators.ts';
+import { dailyBudgetStatus, recordModelCalls, withinDailyBudget } from './store/dailyBudget.ts';
 import { storeStatus } from './store/firestore.ts';
 import { allowRequest } from './store/rateLimit.ts';
 import { translateRequest } from './translate.ts';
@@ -34,32 +35,24 @@ function isAuthorized(supplied: string | undefined): boolean {
 }
 
 /**
- * Browser clients cannot hold a shared secret: anything a public web app sends is readable in
- * its own bundle, so shipping the key there would publish it — and worse, publish a credential
- * that also authorises non-browser callers until it is rotated.
+ * POST /translate is public, and saying so plainly is the point of this note.
  *
- * So a request is authorised by *either* the key or an allowed Origin. Server-to-server callers
- * still need the key and gain nothing from the Origin path (curl sends no Origin by default).
- * A browser on an allowed origin needs no credential at all, so none ships.
+ * The site reaches this service same-origin — Firebase Hosting rewrites walterzaninetti.com/api/**
+ * to it, and the Vite dev server proxies the same path — so the browser sends no credential and
+ * none is shipped in the bundle. A public page cannot hold a secret; the previous Origin allowlist
+ * only looked like a gate, because Origin is set by the caller and forged in one curl flag.
  *
- * Be clear about what this is: an attacker who forges an Origin header gets through. It is a gate
- * against casual misuse, not an authentication boundary. What actually protects the Anthropic
- * spend is the per-IP hourly rate limit below. Upgrading to real attestation means Firebase App
- * Check or Turnstile, which load third-party script into the page — a trade the calling site
- * currently refuses on privacy grounds, and a decision to make deliberately rather than by drift.
+ * So this is not a loosening, it is an honest restatement of what was already true. What bounds
+ * abuse is the per-IP hourly limit plus the daily model-call ceiling, and the ceiling is the one
+ * that caps the bill: rotating IPs is cheap, so the per-IP limit only shapes ordinary traffic.
+ *
+ * Real attestation means Firebase App Check or Cloudflare Turnstile, which load third-party script
+ * into the page — a trade the calling site refuses on privacy grounds, and one to make
+ * deliberately if abuse ever shows up rather than by drift.
+ *
+ * A valid x-api-key marks a server-to-server caller (the eval suite, scripts) and skips the per-IP
+ * limit only. It is a convenience tier, not an access control: the daily ceiling still applies.
  */
-function isAllowedOrigin(req: Request): boolean {
-  const origin = req.headers.origin;
-  return typeof origin === 'string' && config.allowedOrigins.includes(origin);
-}
-
-function requireAuthorized(req: Request, res: Response, next: NextFunction): void {
-  if (!isAuthorized(req.header('x-api-key')) && !isAllowedOrigin(req)) {
-    res.status(401).json({ error: 'unauthorized' });
-    return;
-  }
-  next();
-}
 
 export function createApp() {
   const app = express();
@@ -67,18 +60,14 @@ export function createApp() {
   if (config.trustProxy !== undefined) app.set('trust proxy', config.trustProxy);
   app.use(express.json({ limit: '32kb' }));
 
-  app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin && config.allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Vary', 'Origin');
-      res.setHeader('Access-Control-Allow-Headers', 'content-type, x-api-key');
-      res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-    }
-    if (req.method === 'OPTIONS') {
-      res.sendStatus(204);
-      return;
-    }
+  /**
+   * The site calls this service same-origin, through a Firebase Hosting rewrite in production and
+   * the Vite dev proxy locally. Hosting passes the matched path through unchanged, so `/api/**`
+   * arrives here as `/api/translate` — strip the prefix so one set of routes serves the rewrite,
+   * the dev proxy, and the direct Cloud Run URL without per-environment configuration.
+   */
+  app.use((req, _res, next) => {
+    if (req.url.startsWith('/api/')) req.url = req.url.slice(4);
     next();
   });
 
@@ -90,23 +79,37 @@ export function createApp() {
       promptVersion: PROMPT_VERSION,
       grounding: groundingStatus(),
       store: storeStatus(),
+      dailyBudget: await dailyBudgetStatus(config.dailyModelCallLimit),
     });
   });
 
-  app.post('/translate', requireAuthorized, async (req: Request, res: Response) => {
+  app.post('/translate', async (req: Request, res: Response) => {
     const parsed = RequestSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid_request', details: z.treeifyError(parsed.error) });
       return;
     }
 
-    const identifier = req.ip ?? 'unknown';
-    if (!(await allowRequest(identifier, config.rateLimitPerHour))) {
-      res.status(429).json({ error: 'rate_limited', message: 'Hourly request limit reached.' });
+    if (!isAuthorized(req.header('x-api-key'))) {
+      const identifier = req.ip ?? 'unknown';
+      if (!(await allowRequest(identifier, config.rateLimitPerHour))) {
+        res.status(429).json({ error: 'rate_limited', message: 'Hourly request limit reached.' });
+        return;
+      }
+    }
+
+    if (!(await withinDailyBudget(config.dailyModelCallLimit))) {
+      res.status(429).json({
+        error: 'daily_limit',
+        message: 'Daily model-call ceiling reached. Try again tomorrow.',
+      });
       return;
     }
 
     const result = await translateRequest(parsed.data);
+    // Cache hits report 0 model calls and cost nothing, so they are not charged against it.
+    await recordModelCalls(result.diagnostics.modelCalls);
+
     res.json(result);
   });
 

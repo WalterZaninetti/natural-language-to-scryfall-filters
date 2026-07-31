@@ -30,11 +30,8 @@ export const config = {
   trustProxy: trustProxySetting(),
   model: optional('ANTHROPIC_MODEL', 'claude-sonnet-5'),
   effort: optional('ANTHROPIC_EFFORT', 'low'),
-  allowedOrigins: optional('ALLOWED_ORIGINS', 'http://localhost:5173')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
   rateLimitPerHour: Number(optional('RATE_LIMIT_PER_HOUR', '15')),
+  dailyModelCallLimit: Number(optional('DAILY_MODEL_CALL_LIMIT', '500')),
 } as const;
 
 export type Config = typeof config;
