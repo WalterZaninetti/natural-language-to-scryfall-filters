@@ -1,6 +1,7 @@
 {
   "name": "natural-language-to-scryfall-filters",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Turns natural language (it/en/de/fr/es) into a validated Scryfall search filter.",
   "type": "module",
   "private": true,
